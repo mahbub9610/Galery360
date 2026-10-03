@@ -380,7 +380,7 @@ const $=id=>document.getElementById(id);
 const el=(t,c,txt)=>{const e=document.createElement(t);if(c)e.className=c;if(txt!=null)e.textContent=txt;return e};
 const demos=SCENES.map(S=>({demo:true,name:S.name,info:S.info,scene:S,pano:null,
   spots:S.spots.map(s=>({d:norm(s.p),cat:s.cat,name:s.name,spec:s.spec}))}));
-const groupsEl=$("groups"),statusEl=$("status"),MAXB=50*1048576,ITER=310000,SK="mockup360.sesi",GK="mockup360.github";
+const groupsEl=$("groups"),statusEl=$("status"),MAXB=30*1048576,ITER=310000,SK="mockup360.sesi",GK="mockup360.github";
 function say(t){statusEl.textContent=t||"";statusEl.hidden=!t}
 const mb=b=>(b/1048576).toFixed(1).replace(".",",")+" MB";
 const errMsg=e=>(e&&e.msg)||"gagal menyimpan. Periksa koneksi lalu coba lagi.";
@@ -409,11 +409,14 @@ function ghErr(r){const m={401:"token GitHub tidak valid atau sudah kedaluwarsa.
   return {msg:m[r.status]||"GitHub menolak permintaan (kode "+r.status+")."}}
 async function readFile(path){
   const r=canEdit?await api(path,{accept:"application/vnd.github.raw+json"}):await fetch(path,{cache:"no-cache"});
-  if(r.status===404)return null;if(!r.ok)throw canEdit?ghErr(r):{msg:"file tidak bisa dimuat."};return new Uint8Array(await r.arrayBuffer())}
+  if(r.status===404)return null;if(!r.ok)throw canEdit?ghErr(r):{msg:"file tidak bisa dimuat."};return fromText(await r.text())}
+/* Data disimpan sebagai teks base64, bukan file biner: sebagian browser, antivirus, dan proxy mengubah isi file biner di perjalanan. */
+function fromText(t){t=t.replace(/[^A-Za-z0-9+/=]/g,"");const out=new Uint8Array(Math.floor(t.length*3/4)-(t.endsWith("==")?2:t.endsWith("=")?1:0));
+  for(let i=0,o=0;i<t.length;i+=1048576){const b=atob(t.slice(i,i+1048576));for(let j=0;j<b.length;j++)out[o++]=b.charCodeAt(j)}return out}
 async function getSha(path){const r=await api(path,{accept:"application/vnd.github.object+json"});if(r.status===404)return null;if(!r.ok)throw ghErr(r);return (await r.json()).sha}
-async function writeFile(path,u8,msg){for(let t=0;;t++){
+async function writeFile(path,u8,msg,plain){for(let t=0;;t++){
   if(shas[path]===undefined)shas[path]=await getSha(path);
-  const body={message:msg,content:b64(u8),branch:gh.branch};if(shas[path])body.sha=shas[path];
+  const body={message:msg,content:plain?b64(u8):btoa(b64(u8)),branch:gh.branch};if(shas[path])body.sha=shas[path];
   const r=await api(path,{method:"PUT",body:JSON.stringify(body)});
   if((r.status===409||r.status===422)&&!t){delete shas[path];continue}
   if(!r.ok)throw ghErr(r);return shas[path]=(await r.json()).content.sha}}
@@ -423,11 +426,11 @@ let chain=Promise.resolve();
 const queue=fn=>(chain=chain.catch(()=>{}).then(fn));
 const pack=()=>JSON.stringify({groups:G.groups.map(g=>({id:g.id,name:g.name})),photos:G.photos.map(p=>({id:p.id,name:p.name,group:p.group,type:p.type,w:p.w,h:p.h,bytes:p.bytes,sha:p.sha,tsha:p.tsha,
   spots:p.spots.map(s=>({d:s.d,name:s.name,cat:s.cat||"",note:s.note||""}))}))});
-function commit(msg){render();return queue(async()=>{say("Menyimpan ke GitHub…");await writeFile("data/gallery.enc",await enc(K,te.encode(pack())),msg);
+function commit(msg){render();return queue(async()=>{say("Menyimpan ke GitHub…");await writeFile("data/gallery.txt",await enc(K,te.encode(pack())),msg);
   say("Tersimpan. Pengguna lain melihat perubahan ini sekitar satu menit lagi.");return true}).catch(fail)}
 function saveSpots(P){commit("Ubah titik material "+P.name)}
 function blobUrl(P,thumb){const key=P.id+(thumb?".t":"");
-  if(!urls.has(key))urls.set(key,(async()=>{const raw=await readFile("data/p/"+key+".bin");if(!raw)throw {msg:"file foto belum tersedia."};
+  if(!urls.has(key))urls.set(key,(async()=>{const raw=await readFile("data/p/"+key+".txt");if(!raw)throw {msg:"file foto belum tersedia."};
     return URL.createObjectURL(new Blob([await dec(K,raw)],{type:thumb?"image/jpeg":P.type||"image/jpeg"}))})().catch(e=>{urls.delete(key);throw e}));
   return urls.get(key)}
 
@@ -454,7 +457,7 @@ function card(P){
       G.groups.forEach(g=>{const o=el("option",null,(g.id===P.group?"Grup: ":"Pindah ke: ")+g.name);o.value=g.id;o.selected=g.id===P.group;s.append(o)});
       s.addEventListener("change",()=>{P.group=s.value;commit("Pindahkan foto "+P.name)});a.append(s)}
     armDelete(dl,"Hapus",async()=>{G.photos.splice(G.photos.indexOf(P),1);
-      if(await commit("Hapus foto "+P.name)){queue(()=>deleteFile("data/p/"+P.id+".bin",P.sha)).catch(()=>{});queue(()=>deleteFile("data/p/"+P.id+".t.bin",P.tsha)).catch(()=>{})}});
+      if(await commit("Hapus foto "+P.name)){queue(()=>deleteFile("data/p/"+P.id+".txt",P.sha)).catch(()=>{});queue(()=>deleteFile("data/p/"+P.id+".t.txt",P.tsha)).catch(()=>{})}});
     a.append(dl);li.append(a)}
   return li;
 }
@@ -481,7 +484,7 @@ function render(){
   if(!all.length)groupsEl.append(section("Contoh tampilan","3 ruangan contoh",demos,null));
   const note=$("note"),t=[];
   if(!all.length)t.push("Tiga ruangan contoh digambar oleh halaman ini dan hilang setelah foto pertama diunggah.");
-  if(isOwner)t.push("Foto disimpan terenkripsi dan ditampilkan pada ukuran aslinya, maksimal 50 MB per file (JPG, PNG, atau WebP). Gunakan render panorama equirectangular rasio 2:1 dari V-Ray, Enscape, Lumion, D5, atau Twinmotion.");
+  if(isOwner)t.push("Foto disimpan terenkripsi dan ditampilkan pada ukuran aslinya, maksimal 30 MB per file (JPG, PNG, atau WebP). Gunakan render panorama equirectangular rasio 2:1 dari V-Ray, Enscape, Lumion, D5, atau Twinmotion.");
   note.textContent=t.join(" ");note.hidden=!t.length;
 }
 const loadImg=u=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>rej({msg:"file bukan gambar yang bisa dibaca browser."});i.src=u});
@@ -489,15 +492,15 @@ async function upload(g,files){
   const bad=[];let ok=0;
   for(let n=0;n<files.length;n++){const f=files[n];say("Mengunggah "+(n+1)+" dari "+files.length+": "+f.name+" ("+mb(f.size)+") …");
     try{
-      if(f.size>MAXB)throw {msg:"ukuran file melebihi 50 MB."};
+      if(f.size>MAXB)throw {msg:"ukuran file melebihi 30 MB."};
       const buf=await f.arrayBuffer(),url=URL.createObjectURL(f),im=await loadImg(url),w=im.naturalWidth,h=im.naturalHeight;
       /* gambar kecil hanya untuk kartu galeri; file asli disimpan tanpa diubah */
       const cv=document.createElement("canvas");cv.width=640;cv.height=400;cv.getContext("2d").drawImage(im,w*.36,h*.28,w*.28,h*.35,0,0,640,400);
       const tb=await new Promise(r=>cv.toBlob(r,"image/jpeg",.85));
       const id=rid(),P={id,name:f.name.replace(/\.[^.]+$/,"").slice(0,60),group:g.id,type:f.type||"image/jpeg",w,h,bytes:f.size,spots:[]};
       const eb=await enc(K,buf),et=await enc(K,await tb.arrayBuffer());
-      P.sha=await queue(()=>writeFile("data/p/"+id+".bin",eb,"Tambah foto "+P.name));
-      P.tsha=await queue(()=>writeFile("data/p/"+id+".t.bin",et,"Tambah gambar kecil "+P.name));
+      P.sha=await queue(()=>writeFile("data/p/"+id+".txt",eb,"Tambah foto "+P.name));
+      P.tsha=await queue(()=>writeFile("data/p/"+id+".t.txt",et,"Tambah gambar kecil "+P.name));
       urls.set(id,Promise.resolve(url));urls.set(id+".t",Promise.resolve(URL.createObjectURL(tb)));
       G.photos.push(P);if(!await commit("Tambah foto "+P.name))throw {msg:"daftar galeri gagal disimpan."};ok++;
     }catch(e){bad.push(f.name+": "+errMsg(e))}}
@@ -513,8 +516,8 @@ function lErr(t){$("lErr").textContent=t||"";$("lErr").hidden=!t}
 function setEdit(){canEdit=isOwner&&!!gh&&!broken;$("newGroup").hidden=!canEdit;
   $("who").textContent="Masuk sebagai "+me.user+(canEdit?" · pemilik, boleh unggah dan edit":isOwner?" · pemilik, GitHub belum tersambung":" · lihat saja");
   $("ghState").textContent=gh?"Tersambung ke "+gh.owner+"/"+gh.repo+" ("+gh.branch+").":"Belum tersambung.";$("accForm").hidden=!canEdit}
-async function loadGallery(fromSession){loaded=false;broken=false;let step="mengambil data/gallery.enc",size=-1;render();
-  try{const raw=await readFile("data/gallery.enc");size=raw?raw.length:0;step="membuka enkripsi";G=raw?JSON.parse(td.decode(await dec(K,raw))):{groups:[],photos:[]};step="membaca isi";
+async function loadGallery(fromSession){loaded=false;broken=false;let step="mengambil data/gallery.txt",size=-1;render();
+  try{const raw=await readFile("data/gallery.txt");size=raw?raw.length:0;step="membuka enkripsi";G=raw?JSON.parse(td.decode(await dec(K,raw))):{groups:[],photos:[]};step="membaca isi";
     G.groups=(G.groups||[]).map(g=>({id:String(g.id),name:String(g.name||"Grup")}));
     G.photos=(G.photos||[]).map(p=>Object.assign({},p,{name:String(p.name||"Tanpa nama"),spots:(p.spots||[]).filter(s=>s&&Array.isArray(s.d)&&s.d.length===3)}));
   }catch(e){if(fromSession&&e&&e.name==="OperationError"){logout();return}
@@ -553,7 +556,7 @@ $("accForm").addEventListener("submit",async e=>{e.preventDefault();const a=acco
   $("accState").textContent="Menyimpan…";
   try{const raw=new Uint8Array(await crypto.subtle.exportKey("raw",K)),salt=crypto.getRandomValues(new Uint8Array(16)),w=await enc(await kek(pw,salt,ITER),raw);
     const next={v:accounts.v,users:accounts.users.map(x=>x===a?{user:a.user,role:a.role,salt:b64(salt),iter:ITER,wrap:b64(w)}:x)};
-    await queue(()=>writeFile("data/accounts.json",te.encode(JSON.stringify(next,null,1)),"Ganti kata sandi "+a.user));accounts=next;
+    await queue(()=>writeFile("data/accounts.json",te.encode(JSON.stringify(next,null,1)),"Ganti kata sandi "+a.user,true));accounts=next;
     $("accPass").value="";$("accState").textContent="Kata sandi "+a.user+" diganti. Berlaku di situs sekitar satu menit lagi."}
   catch(x){$("accState").textContent="Gagal: "+errMsg(x)}});
 async function boot(){
