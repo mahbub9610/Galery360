@@ -153,6 +153,7 @@ img{max-width:100%}
     <p class="lead">Masuk dengan akun yang diberikan pemilik galeri.</p>
     <label for="lUser">Nama pengguna<input id="lUser" autocomplete="username" autocapitalize="none" required></label>
     <label for="lPass">Kata sandi<input id="lPass" type="password" autocomplete="current-password" required></label>
+    <button class="link" type="button" id="lShow" aria-pressed="false" style="align-self:flex-start">Lihat kata sandi</button>
     <button class="btn primary" type="submit" id="lBtn">Masuk</button>
     <p class="lerr" id="lErr" role="alert" hidden></p>
   </form>
@@ -397,7 +398,7 @@ const dec=(key,u8)=>crypto.subtle.decrypt({name:"AES-GCM",iv:u8.subarray(0,12)},
 const importK=raw=>crypto.subtle.importKey("raw",raw,"AES-GCM",true,["encrypt","decrypt"]);
 
 /* ---------- keadaan ---------- */
-let K=null,me=null,accounts=null,G={groups:[],photos:[]},gh=null,isOwner=false,canEdit=false,loaded=false;
+let K=null,me=null,accounts=null,G={groups:[],photos:[]},gh=null,isOwner=false,canEdit=false,loaded=false,broken=false;
 const shas={},urls=new Map();
 
 /* ---------- penyimpanan: baca dari situs, tulis lewat GitHub API (hanya pemegang token) ---------- */
@@ -509,33 +510,37 @@ $("groupForm").addEventListener("submit",e=>{e.preventDefault();const v=$("gName
 
 /* ---------- masuk, keluar, pengaturan ---------- */
 function lErr(t){$("lErr").textContent=t||"";$("lErr").hidden=!t}
-function setEdit(){canEdit=isOwner&&!!gh;$("newGroup").hidden=!canEdit;
+function setEdit(){canEdit=isOwner&&!!gh&&!broken;$("newGroup").hidden=!canEdit;
   $("who").textContent="Masuk sebagai "+me.user+(canEdit?" · pemilik, boleh unggah dan edit":isOwner?" · pemilik, GitHub belum tersambung":" · lihat saja");
   $("ghState").textContent=gh?"Tersambung ke "+gh.owner+"/"+gh.repo+" ("+gh.branch+").":"Belum tersambung.";$("accForm").hidden=!canEdit}
-async function loadGallery(){loaded=false;render();
-  try{const raw=await readFile("data/gallery.enc");G=raw?JSON.parse(td.decode(await dec(K,raw))):{groups:[],photos:[]};
+async function loadGallery(fromSession){loaded=false;broken=false;let step="mengambil data/gallery.enc",size=-1;render();
+  try{const raw=await readFile("data/gallery.enc");size=raw?raw.length:0;step="membuka enkripsi";G=raw?JSON.parse(td.decode(await dec(K,raw))):{groups:[],photos:[]};step="membaca isi";
     G.groups=(G.groups||[]).map(g=>({id:String(g.id),name:String(g.name||"Grup")}));
     G.photos=(G.photos||[]).map(p=>Object.assign({},p,{name:String(p.name||"Tanpa nama"),spots:(p.spots||[]).filter(s=>s&&Array.isArray(s.d)&&s.d.length===3)}));
-  }catch(e){if(e instanceof DOMException){logout();return}say("Galeri tidak bisa dimuat: "+errMsg(e))}
-  loaded=true;render()}
-async function enter(){
+  }catch(e){if(fromSession&&e&&e.name==="OperationError"){logout();return}
+    /* jangan pernah memuat ulang diam-diam: tampilkan penyebabnya, dan kunci penyuntingan agar galeri tidak tertimpa data kosong */
+    broken=true;G={groups:[],photos:[]};say("Galeri tidak bisa dimuat saat "+step+" ("+((e&&e.name)||"galat")+((e&&(e.message||e.msg))?": "+(e.message||e.msg):"")+", "+size+" byte). Kirim tulisan ini ke pembuat situs.")}
+  setEdit();loaded=true;render()}
+async function enter(fromSession){
   isOwner=me.role==="owner";$("login").hidden=true;$("gallery").hidden=false;$("setBtn").hidden=!isOwner;
   if(isOwner){try{gh=JSON.parse(localStorage.getItem(GK))}catch(e){gh=null}
     const host=location.hostname.match(/^(.+)\.github\.io$/),seg=location.pathname.split("/").filter(Boolean)[0];
     $("ghOwner").value=gh?gh.owner:host?host[1]:"";$("ghRepo").value=gh?gh.repo:host?(seg&&!/\.html?$/.test(seg)?seg:location.hostname):"";if(gh){$("ghBranch").value=gh.branch;$("ghToken").value=gh.token}
     $("accUser").replaceChildren(...accounts.users.map(a=>{const o=el("option",null,a.user+(a.role==="owner"?" (pemilik)":""));o.value=a.user;return o}));
     if(!gh){$("settings").hidden=false;$("setBtn").setAttribute("aria-pressed","true")}}
-  setEdit();await loadGallery()}
+  setEdit();await loadGallery(fromSession)}
 function logout(){try{sessionStorage.removeItem(SK)}catch(e){}location.reload()}
 $("logout").addEventListener("click",logout);
 $("setBtn").addEventListener("click",()=>{const s=$("settings");s.hidden=!s.hidden;$("setBtn").setAttribute("aria-pressed",String(!s.hidden))});
 $("loginForm").addEventListener("submit",async e=>{e.preventDefault();lErr("");$("lBtn").disabled=true;
   const u=$("lUser").value.trim().toLowerCase(),a=accounts&&accounts.users.find(x=>x.user.toLowerCase()===u);
-  try{if(!a)throw 0;const raw=new Uint8Array(await dec(await kek($("lPass").value,unb64(a.salt),a.iter),unb64(a.wrap)));
-    K=await importK(raw);me={user:a.user,role:a.role};try{sessionStorage.setItem(SK,JSON.stringify({user:a.user,role:a.role,k:b64(raw)}))}catch(x){}
-    $("lPass").value="";await enter()}
-  catch(x){lErr(accounts?"Nama pengguna atau kata sandi salah.":"Data akun tidak ditemukan.")}
-  $("lBtn").disabled=false});
+  const pw=$("lPass").value.trim().replace(/^`+|`+$/g,"");let ok=false;
+  try{if(!a)throw 0;const raw=new Uint8Array(await dec(await kek(pw,unb64(a.salt),a.iter),unb64(a.wrap)));
+    K=await importK(raw);me={user:a.user,role:a.role};ok=true;try{sessionStorage.setItem(SK,JSON.stringify({user:a.user,role:a.role,k:b64(raw)}))}catch(x){}}
+  catch(x){lErr(!accounts?"Data akun tidak ditemukan.":x&&x.name&&x.name!=="OperationError"?"Browser ini gagal memproses login ("+x.name+").":"Nama pengguna atau kata sandi salah.")}
+  $("lBtn").disabled=false;
+  if(ok){$("lPass").value="";try{await enter()}catch(x){$("login").hidden=true;$("gallery").hidden=false;say("Halaman gagal dibuka ("+((x&&x.name)||"galat")+": "+((x&&x.message)||"")+"). Kirim tulisan ini ke pembuat situs.")}}});
+$("lShow").addEventListener("click",()=>{const f=$("lPass"),on=f.type==="password";f.type=on?"text":"password";$("lShow").textContent=on?"Sembunyikan kata sandi":"Lihat kata sandi";$("lShow").setAttribute("aria-pressed",String(on))});
 $("ghForm").addEventListener("submit",async e=>{e.preventDefault();
   gh={owner:$("ghOwner").value.trim(),repo:$("ghRepo").value.trim(),branch:$("ghBranch").value.trim()||"main",token:$("ghToken").value.trim()};
   $("ghState").textContent="Memeriksa sambungan…";
@@ -554,7 +559,7 @@ $("accForm").addEventListener("submit",async e=>{e.preventDefault();const a=acco
 async function boot(){
   if(!window.crypto||!crypto.subtle){lErr("Halaman ini harus dibuka lewat https (atau localhost).");return}
   try{const r=await fetch("data/accounts.json",{cache:"no-cache"});if(!r.ok)throw 0;accounts=await r.json()}catch(e){lErr("Data akun tidak ditemukan (data/accounts.json).");return}
-  try{const s=JSON.parse(sessionStorage.getItem(SK));if(s&&accounts.users.some(a=>a.user===s.user&&a.role===s.role)){K=await importK(unb64(s.k));me={user:s.user,role:s.role};await enter()}}catch(e){}
+  try{const s=JSON.parse(sessionStorage.getItem(SK));if(s&&accounts.users.some(a=>a.user===s.user&&a.role===s.role)){K=await importK(unb64(s.k));me={user:s.user,role:s.role};await enter(true)}}catch(e){}
 }
 
 /* ---------- viewer WebGL ---------- */
