@@ -1,0 +1,678 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Galeri Mockup 360</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: papan material. Galeri kartu render di atas dasar batu pucat; klik kartu membuka ruang pandang 360 selayar penuh dengan legenda material di sisi kanan. */
+:root{
+  --bg:#E8ECEA; --surface:#F6F8F6; --fg:#1B2422; --muted:#5A6764; --line:#C8D0CC;
+  --accent:#0C6B60; --on-accent:#F3FBF9; --stage:#0E1312; --danger:#B3261E;
+  --display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --body:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#111615; --surface:#1A2120; --fg:#E5ECE9; --muted:#93A29E; --line:#2D3836;
+  --accent:#52C7B5; --on-accent:#06201C; --stage:#070A09; --danger:#F28B82; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#111615; --surface:#1A2120; --fg:#E5ECE9; --muted:#93A29E; --line:#2D3836;
+  --accent:#52C7B5; --on-accent:#06201C; --stage:#070A09; --danger:#F28B82; color-scheme:dark }
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font:400 16px/1.55 var(--body)}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.page{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:36px 56px;display:flex;flex-direction:column;gap:32px}
+.head{display:flex;flex-wrap:wrap;gap:20px 40px;align-items:flex-end;justify-content:space-between}
+.head .intro{min-width:0;flex:1 1 420px}
+.tools{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}
+.who{font:500 12px/1.3 var(--mono);letter-spacing:.04em;color:var(--muted)}
+#groups{display:flex;flex-direction:column;gap:36px}
+.group{display:flex;flex-direction:column;gap:14px}
+.ghead{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;border-bottom:1px solid var(--line);padding-bottom:10px;min-height:46px}
+.ghead h2{font:700 22px/1.2 var(--display);margin:0;min-width:0}
+.ghead .count{color:var(--muted);font-size:14px;margin-right:auto}
+.gempty{color:var(--muted);font-size:14px;margin:0}
+.cell{display:flex;flex-direction:column;gap:6px;min-width:0}
+.acts{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;min-height:30px}
+.acts select{font-size:13px;padding:3px 6px;border-radius:4px;border:1px solid var(--line);background:var(--surface);color:var(--fg);max-width:160px}
+.link{border:0;background:none;color:var(--muted);cursor:pointer;font-size:13px;padding:4px 6px;border-radius:4px;text-decoration:underline;text-underline-offset:2px}
+.link:hover{color:var(--fg)}
+.link.danger{color:var(--danger);font-weight:600}
+.inline{display:flex;flex-wrap:wrap;gap:6px;flex:1 1 100%}
+.inline input{flex:1 1 140px;min-width:0;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);font-size:14px}
+.status{margin:0;padding:10px 14px;border-radius:6px;border:1px solid var(--line);background:var(--surface);font-size:14px}
+.thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+form.add.row{flex-direction:row;flex-wrap:wrap;align-items:flex-end;background:var(--surface)}
+form.add.row label{flex:1 1 240px}
+.eyebrow{font:500 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+h1{font:700 clamp(30px,5vw,46px)/1.05 var(--display);letter-spacing:-.02em;margin:10px 0 12px;text-wrap:balance}
+.lead{color:var(--muted);max-width:60ch;margin:0}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:6px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-weight:500;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.small{padding:6px 11px;font-size:14px}
+.btn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;list-style:none;margin:0;padding:0}
+.card{display:flex;flex-direction:column;width:100%;padding:0;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:8px;overflow:hidden;cursor:pointer;transition:transform .18s,border-color .18s}
+.card:hover{transform:translateY(-3px);border-color:var(--accent)}
+.thumb{position:relative;aspect-ratio:16/10;background:var(--line);display:block}
+.thumb canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.badge{position:absolute;left:10px;bottom:10px;font:500 11px/1 var(--mono);letter-spacing:.08em;padding:6px 8px;border-radius:4px;background:rgba(10,16,15,.72);color:#F1F6F4}
+.meta{padding:14px 16px 16px;display:flex;flex-direction:column;gap:4px}
+.meta strong{font:700 20px/1.2 var(--display)}
+.meta span{color:var(--muted);font-size:14px}
+.note{color:var(--muted);font-size:14px;border-top:1px solid var(--line);padding-top:16px;max-width:75ch;margin:0}
+
+/* viewer */
+.viewer{position:fixed;inset:0;z-index:10;background:var(--bg);display:grid;grid-template-rows:auto 1fr;grid-template-columns:minmax(0,1fr) 320px;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.bar{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:10px 16px;border-bottom:1px solid var(--line)}
+.bar h2{font:700 18px/1.2 var(--display);margin:0 auto 0 4px;min-width:0}
+.stage{position:relative;background:var(--stage);overflow:hidden;min-height:0;touch-action:none;cursor:grab;user-select:none}
+.stage.drag{cursor:grabbing}
+.stage.adding{cursor:crosshair}
+.stage>canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hint{position:absolute;left:12px;top:12px;font-size:13px;padding:7px 12px;border-radius:999px;background:rgba(10,16,15,.7);color:#F1F6F4;pointer-events:none;max-width:calc(100% - 76px)}
+.zoom{position:absolute;right:12px;top:12px;display:flex;flex-direction:column;gap:6px}
+.zoom button{width:36px;height:36px;border-radius:6px;border:0;background:rgba(10,16,15,.7);color:#F1F6F4;font-size:20px;line-height:1;cursor:pointer}
+.loading{position:absolute;inset:0;display:grid;place-items:center;color:#DDE6E3;font:500 13px var(--mono);letter-spacing:.08em}
+
+.hs{position:absolute;left:0;top:0;width:0;height:0;padding:0;border:0;background:none;cursor:pointer}
+.hs .dot{position:absolute;left:-15px;top:-15px;width:30px;height:30px;border-radius:50%;background:#0C6B60;color:#fff;border:2px solid #fff;
+  font:500 12px/26px var(--mono);text-align:center;box-shadow:0 0 0 6px rgba(255,255,255,.28),0 2px 8px rgba(0,0,0,.5);transition:transform .15s}
+.hs:hover .dot,.hs:focus-visible .dot,.hs.on .dot{transform:scale(1.2);background:#fff;color:#0C6B60}
+.hs:focus-visible{outline:none}
+.tip{position:absolute;left:0;bottom:26px;transform:translateX(-50%);width:250px;padding:12px 14px;border-radius:8px;background:var(--surface);color:var(--fg);
+  border:1px solid var(--line);box-shadow:0 10px 30px rgba(0,0,0,.35);text-align:left;cursor:default;display:none;z-index:2}
+.hs:hover,.hs:focus-visible,.hs.on{z-index:3}
+.hs:hover .tip,.hs:focus-visible .tip,.hs.on .tip{display:block}
+.hs.below .tip{bottom:auto;top:26px}
+.hs.toL .tip{transform:translateX(-20px)}
+.hs.toR .tip{transform:translateX(calc(-100% + 20px))}
+.tip small{display:block;font:500 11px/1.2 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.tip b{display:block;font:700 17px/1.25 var(--display);margin:4px 0 8px}
+.tip dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:13px}
+.tip dt{color:var(--muted)}
+.tip dd{margin:0}
+.tip p{margin:0;font-size:13px;white-space:pre-wrap}
+
+.side{background:var(--surface);border-left:1px solid var(--line);overflow:auto;padding:16px;display:flex;flex-direction:column;gap:14px;min-height:0;min-width:0}
+.side h3{font:500 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0}
+.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.list li{display:flex;gap:6px;align-items:stretch}
+.item{flex:1;min-width:0;display:flex;gap:10px;align-items:center;text-align:left;padding:8px 10px;border-radius:6px;border:1px solid transparent;background:none;cursor:pointer}
+.item:hover,.item.on{border-color:var(--accent)}
+.item i{flex:none;width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--on-accent);font:500 11px/24px var(--mono);font-style:normal;text-align:center}
+.item span{min-width:0;display:flex;flex-direction:column;line-height:1.3}
+.item em{font-style:normal;color:var(--muted);font-size:12px}
+.del{flex:none;border:0;background:none;color:var(--muted);cursor:pointer;padding:0 8px;border-radius:6px;font-size:13px}
+.del:hover{color:var(--fg)}
+.empty{color:var(--muted);font-size:14px;margin:0}
+form.add{display:flex;flex-direction:column;gap:10px;padding:12px;border:1px solid var(--accent);border-radius:8px}
+form.add label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+form.add input,form.add textarea{padding:8px 10px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font-size:15px;width:100%}
+form.add div{display:flex;gap:8px}
+
+@media (max-width:800px){
+  .viewer{grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr auto}
+  .side{border-left:0;border-top:1px solid var(--line);max-height:34vh;padding:12px 16px}
+  .bar h2{flex-basis:100%;order:-1;margin:0}
+  .tip{width:220px}
+}
+@media (prefers-reduced-motion:reduce){ .card,.hs .dot{transition:none} }
+
+body{margin:0}
+img{max-width:100%}
+.login{min-height:100%;display:grid;place-items:center;padding:24px 16px}
+.logincard{width:100%;max-width:400px;display:flex;flex-direction:column;gap:14px;padding:28px;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.logincard h1{font-size:32px;margin:6px 0 0}
+.logincard label,.settings label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+.logincard input,.settings select{padding:10px 12px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font-size:16px;width:100%}
+.lerr{color:var(--danger);margin:0;font-size:14px}
+.settings{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.settings form.add{border-color:var(--line);background:var(--surface)}
+.settings h2{margin:0;font:700 18px/1.2 var(--display)}
+.settings p{margin:0;font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<section class="login" id="login">
+  <form class="logincard" id="loginForm">
+    <span class="eyebrow">Presentasi material interior</span>
+    <h1>Galeri Mockup 360</h1>
+    <p class="lead">Masuk dengan akun yang diberikan pemilik galeri.</p>
+    <label for="lUser">Nama pengguna<input id="lUser" autocomplete="username" autocapitalize="none" required></label>
+    <label for="lPass">Kata sandi<input id="lPass" type="password" autocomplete="current-password" required></label>
+    <button class="btn primary" type="submit" id="lBtn">Masuk</button>
+    <p class="lerr" id="lErr" role="alert" hidden></p>
+  </form>
+</section>
+
+<main class="page" id="gallery" hidden>
+  <header class="head">
+    <div class="intro">
+      <span class="eyebrow">Presentasi material interior</span>
+      <h1>Galeri Mockup 360</h1>
+      <p class="lead">Klik salah satu render untuk masuk ke ruangannya. Geser untuk melihat sekeliling, lalu arahkan kursor ke titik bernomor untuk membaca spesifikasi materialnya.</p>
+    </div>
+    <div class="tools">
+      <span class="who" id="who"></span>
+      <button class="btn primary" id="newGroup" type="button" hidden>+ Buat grup</button>
+      <button class="btn" id="setBtn" type="button" aria-pressed="false" hidden>Pengaturan</button>
+      <button class="btn" id="logout" type="button">Keluar</button>
+    </div>
+  </header>
+  <section class="settings" id="settings" hidden>
+    <form class="add" id="ghForm">
+      <h2>Sambungan GitHub</h2>
+      <p>Diperlukan agar unggahan dan perubahan tersimpan ke repo. Token hanya disimpan di browser ini dan tidak ikut terunggah.</p>
+      <label for="ghOwner">Nama akun GitHub<input id="ghOwner" required autocapitalize="none"></label>
+      <label for="ghRepo">Nama repo<input id="ghRepo" required autocapitalize="none"></label>
+      <label for="ghBranch">Branch<input id="ghBranch" required value="main" autocapitalize="none"></label>
+      <label for="ghToken">Token akses (Contents: Read and write)<input id="ghToken" type="password" required autocomplete="off"></label>
+      <div><button class="btn small primary" type="submit">Sambungkan</button><button class="btn small" type="button" id="ghOff">Putuskan</button></div>
+      <p id="ghState" role="status"></p>
+    </form>
+    <form class="add" id="accForm">
+      <h2>Kata sandi akun</h2>
+      <p>Ganti kata sandi bawaan sebelum membagikan akun ke orang lain.</p>
+      <label for="accUser">Akun<select id="accUser"></select></label>
+      <label for="accPass">Kata sandi baru (minimal 8 karakter)<input id="accPass" type="password" minlength="8" required autocomplete="new-password"></label>
+      <div><button class="btn small primary" type="submit">Ganti kata sandi</button></div>
+      <p id="accState" role="status"></p>
+    </form>
+  </section>
+  <form class="add row" id="groupForm" hidden>
+    <label for="gName">Nama grup baru<input id="gName" required maxlength="60" placeholder="mis. Rumah Tipe 45, Proyek Kemang"></label>
+    <div><button class="btn small primary" type="submit">Buat grup</button><button class="btn small" type="button" id="gCancel">Batal</button></div>
+  </form>
+  <p class="status" id="status" role="status" hidden></p>
+  <div id="groups"></div>
+  <p class="note" id="note" hidden></p>
+</main>
+
+<section class="viewer" id="viewer" hidden>
+  <div class="bar">
+    <button class="btn small" id="back" type="button">&larr; Galeri</button>
+    <h2 id="vTitle"></h2>
+    <button class="btn small" id="addBtn" type="button" aria-pressed="false">+ Tambah titik</button>
+    <button class="btn small" id="fsBtn" type="button">Layar penuh</button>
+  </div>
+  <div class="stage" id="stage">
+    <canvas id="gl"></canvas>
+    <div id="spots"></div>
+    <div class="zoom"><button type="button" id="zin" aria-label="Perbesar">+</button><button type="button" id="zout" aria-label="Perkecil">&minus;</button></div>
+    <div class="hint" id="hint"></div>
+    <div class="loading" id="loading" hidden>MENYIAPKAN PANORAMA…</div>
+  </div>
+  <aside class="side">
+    <form class="add" id="addForm" hidden>
+      <label for="fName">Nama material<input id="fName" required maxlength="60" placeholder="mis. HPL motif kayu jati"></label>
+      <label for="fCat">Lokasi / kategori<input id="fCat" maxlength="40" placeholder="mis. Dinding, Lantai, Furnitur"></label>
+      <label for="fNote">Spesifikasi<textarea id="fNote" rows="3" maxlength="300" placeholder="Ukuran, finishing, kode warna…"></textarea></label>
+      <div><button class="btn small primary" type="submit">Simpan titik</button><button class="btn small" type="button" id="fCancel">Batal</button></div>
+    </form>
+    <h3>Material di ruangan ini</h3>
+    <ol class="list" id="list"></ol>
+    <p class="empty" id="empty" hidden>Belum ada titik. Tekan “+ Tambah titik”, lalu klik permukaan yang ingin diberi keterangan.</p>
+  </aside>
+</section>
+
+<script>
+(function(){
+"use strict";
+/* ---------- tekstur prosedural ---------- */
+const fr=x=>x-Math.floor(x);
+const hash=(x,y)=>fr(Math.sin(x*127.1+y*311.7)*43758.5453);
+function vn(x,y){const xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi,u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf);
+  const a=hash(xi,yi),b=hash(xi+1,yi),c=hash(xi,yi+1),d=hash(xi+1,yi+1);return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v}
+const fbm=(x,y)=>vn(x,y)*.5+vn(x*2.1,y*2.1)*.3+vn(x*4.3,y*4.3)*.2;
+const sc=(c,k)=>[c[0]*k,c[1]*k,c[2]*k];
+const M={
+  paint:c=>(u,v)=>sc(c,.97+.05*vn(u*2,v*2)),
+  planks:(c,w,len)=>(u,v)=>{const row=Math.floor(u/w),col=Math.floor((v+hash(row,7)*len)/len);
+    if(fr(u/w)<.035||fr((v+hash(row,7)*len)/len)<.004)return sc(c,.55);
+    return sc(c,(.8+.32*hash(row,col))*(.93+.12*vn(u*50,v*4+row*9)))},
+  tile:(c,s,g)=>(u,v)=>{const fx=fr(u/s),fy=fr(v/s),e=.006/s;if(fx<e||fy<e)return g;
+    return sc(c,(.95+.07*hash(Math.floor(u/s),Math.floor(v/s)))*(.94+.1*fbm(u*3,v*3)))},
+  terrazzo:(c,s)=>(u,v)=>{const fx=fr(u/s),fy=fr(v/s);if(fx<.008||fy<.008)return sc(c,.7);
+    const cx=Math.floor(u/.035),cy=Math.floor(v/.035),h=hash(cx,cy);
+    if(h>.8){const dx=fr(u/.035)-.5,dy=fr(v/.035)-.5;if(dx*dx+dy*dy<.12){const q=hash(cy,cx);return q<.35?[196,150,120]:q<.7?[70,80,84]:[240,238,230]}}
+    return sc(c,.95+.08*vn(u*20,v*20))},
+  brick:c=>(u,v)=>{const h=.075,w=.23,row=Math.floor(v/h),uu=u+(row&1)*w/2;
+    if(fr(v/h)<.14||fr(uu/w)<.05)return [196,190,180];
+    return sc(c,(.72+.42*hash(Math.floor(uu/w),row))*(.9+.18*vn(u*70,v*70)))},
+  slats:(c,p)=>(u,v)=>{if(fr(u/p)<.28)return sc(c,.3);return sc(c,(.84+.22*hash(Math.floor(u/p),1))*(.9+.18*vn(u*3,v*16)))},
+  marble:c=>(u,v)=>{const n=fbm(u*2,v*2),ve=Math.abs(Math.sin(u*3+v*2+n*7));return sc(c,ve<.07?.7:.94+.07*n)},
+  fabric:c=>(u,v)=>sc(c,.9+.14*vn(u*160,v*160)),
+  window:()=>(u,v,w)=>{const {u0,u1,v0,v1}=w,fu=(u-u0)/(u1-u0),fv=(v-v0)/(v1-v0),fw=.05/(u1-u0),fh=.05/(v1-v0);
+    if(fu<fw||fu>1-fw||fv<fh||fv>1-fh||Math.abs(fu-.5)<fw*.6)return [52,56,58];
+    if(fv<.3+.06*vn(u*5,3))return [100+50*vn(u*9,v*9),142+40*vn(u*7,v*11),96,1];
+    const t=(fv-.3)/.7;return [226-80*t,238-48*t,246-12*t,1]}
+};
+const WHITE=[238,236,230];
+
+/* ---------- tiga ruangan contoh (mata di titik asal, tinggi 1,5 m) ---------- */
+const F=-1.5, box=(x0,x1,y0,y1,z0,z1,mat,top)=>({lo:[x0,F+y0,z0],hi:[x1,F+y1,z1],mat,top});
+const walnut=[112,74,48], oak=[196,158,112];
+const SCENES=[
+ {name:"Ruang Keluarga",info:"5,0 × 6,0 m · plafon 2,8 m",
+  room:{lo:[-2.5,F,-3.2],hi:[2.5,1.3,2.8]},
+  floor:M.planks(oak,.14,1.2),ceil:M.paint([244,243,238]),
+  walls:{N:M.slats(walnut,.06),S:M.paint([230,226,214]),E:M.paint([230,226,214]),W:M.paint([230,226,214])},
+  win:{wall:"E",u0:-2,u1:.6,v0:.45,v1:2.4},
+  boxes:[box(-1.5,1.5,0,.015,-2.1,1.3,M.fabric([206,196,176])),
+    box(-1.2,1.2,0,.42,1.5,2.5,M.fabric([92,112,104])),box(-1.2,1.2,.42,.85,2.25,2.5,M.fabric([92,112,104])),
+    box(-.6,.6,0,.4,-1.7,-1.05,M.paint([52,50,48]),M.marble([240,238,232])),
+    box(-1.3,1.3,0,.45,-3.2,-2.8,M.planks(walnut,.4,3)),
+    box(-.85,.85,.75,1.7,-3.2,-3.14,M.paint([18,20,22]))],
+  spots:[
+   {p:[1.9,F,-.6],cat:"Lantai",name:"Parket engineered oak",spec:[["Ukuran","14 × 120 cm, tebal 12 mm"],["Finishing","UV matte, natural"],["Pemasangan","Acak, lem + underlay"],["Kode","LT-01"]]},
+   {p:[1.9,.3,-3.2],cat:"Dinding aksen",name:"Kisi kayu walnut",spec:[["Profil","Bilah 4 cm, celah 2 cm"],["Bahan","MDF lapis veneer walnut"],["Finishing","Melamin doff"],["Kode","DD-03"]]},
+   {p:[.55,F+.42,1.9],cat:"Furnitur",name:"Sofa kain bouclé",spec:[["Warna","Hijau sage"],["Rangka","Kayu mahoni oven"],["Busa","Density 32"],["Kode","FR-02"]]},
+   {p:[0,F+.4,-1.35],cat:"Furnitur",name:"Top meja marmer putih",spec:[["Ukuran","120 × 65 cm, tebal 2 cm"],["Finishing","Honed"],["Kaki","Besi hollow hitam doff"],["Kode","FR-05"]]},
+   {p:[-2.5,.2,.9],cat:"Dinding",name:"Cat interior putih gading",spec:[["Jenis","Akrilik emulsi, matte"],["Lapisan","1× sealer, 2× cat"],["Kode","CT-01"]]},
+   {p:[2.5,-.2,-.72],cat:"Bukaan",name:"Jendela aluminium + kaca",spec:[["Kusen","Aluminium 4 inci, hitam"],["Kaca","Clear tempered 8 mm"],["Ukuran","260 × 195 cm"],["Kode","JD-01"]]},
+   {p:[-1.25,F+.015,.4],cat:"Pelengkap",name:"Karpet wol tenun",spec:[["Ukuran","300 × 340 cm"],["Warna","Krem pasir"],["Kode","PL-04"]]}]},
+ {name:"Dapur",info:"4,0 × 4,5 m · plafon 2,8 m",
+  room:{lo:[-2,F,-2.5],hi:[2,1.3,2]},
+  floor:M.terrazzo([198,198,192],.6),ceil:M.paint([244,243,238]),
+  walls:{N:M.tile([240,240,234],.1,[170,172,170]),S:M.paint([226,228,222]),E:M.paint([226,228,222]),W:M.paint([226,228,222])},
+  win:{wall:"W",u0:-1,u1:1,v0:1,v1:2.3},
+  boxes:[box(-2,2,0,.86,-2.5,-1.9,M.paint([58,84,76])),box(-2,2,.86,.9,-2.5,-1.86,M.terrazzo([48,50,52],9)),
+    box(-2,2,1.5,2.3,-2.5,-2.15,M.planks(oak,.5,2)),
+    box(-.9,.9,0,.86,.75,1.5,M.slats(oak,.05)),box(-1,1,.86,.9,.68,1.57,M.marble([242,240,236])),
+    box(1.35,2,0,2.1,-1.8,-1.1,M.paint([58,84,76]))],
+  spots:[
+   {p:[1.1,F,-.4],cat:"Lantai",name:"Granit tile motif terrazzo",spec:[["Ukuran","60 × 60 cm"],["Permukaan","Matte, R10 anti-slip"],["Nat","2 mm, abu muda"],["Kode","LT-04"]]},
+   {p:[-.9,-.2,-2.5],cat:"Backsplash",name:"Keramik subway putih",spec:[["Ukuran","10 × 10 cm glossy"],["Nat","Epoxy abu"],["Tinggi","60 cm di atas meja"],["Kode","DD-06"]]},
+   {p:[.7,F+.9,-2.1],cat:"Meja dapur",name:"Top solid surface hitam",spec:[["Tebal","4 cm (tepi lipat)"],["Motif","Bintik halus"],["Kode","TP-01"]]},
+   {p:[-.3,F+.5,-1.9],cat:"Kabinet bawah",name:"HPL hijau botol doff",spec:[["Rangka","Multiplek 18 mm"],["Engsel","Soft-close"],["Kode","KB-02"]]},
+   {p:[1,F+1.9,-2.15],cat:"Kabinet atas",name:"HPL motif kayu oak",spec:[["Rangka","Multiplek 15 mm"],["Bukaan","Push-to-open"],["Kode","KB-03"]]},
+   {p:[0,F+.9,1.1],cat:"Island",name:"Top marmer putih",spec:[["Ukuran","200 × 90 cm, tebal 2 cm"],["Finishing","Poles, coating anti-noda"],["Kode","TP-02"]]}]},
+ {name:"Kamar Tidur Utama",info:"4,0 × 4,5 m · plafon 2,8 m",
+  room:{lo:[-2,F,-2.6],hi:[2,1.3,1.9]},
+  floor:M.planks([150,132,116],.18,1.5),ceil:M.paint([244,243,238]),
+  walls:{N:M.brick([168,92,68]),S:M.paint([222,218,210]),E:M.paint([222,218,210]),W:M.paint([222,218,210])},
+  win:{wall:"E",u0:-1.2,u1:1,v0:.6,v1:2.4},
+  boxes:[box(-1.05,1.05,0,1.15,-2.6,-2.48,M.fabric([120,124,134])),
+    box(-.98,.98,0,.3,-2.48,-.45,M.planks(walnut,.3,3)),box(-.92,.92,.3,.56,-2.45,-.5,M.fabric([236,232,224])),
+    box(-.92,.92,.56,.6,-1.5,-.5,M.fabric([150,166,170])),
+    box(-1.6,-1.12,0,.5,-2.6,-2.15,M.planks(walnut,.3,3)),box(1.12,1.6,0,.5,-2.6,-2.15,M.planks(walnut,.3,3)),
+    box(-2,-1.42,0,2.4,-.3,1.9,M.paint([232,230,224]))],
+  spots:[
+   {p:[1.3,F,-.2],cat:"Lantai",name:"Vinyl SPC motif kayu abu",spec:[["Ukuran","18 × 150 cm, tebal 5 mm"],["Sistem","Click-lock"],["Kode","LT-02"]]},
+   {p:[1.5,.5,-2.6],cat:"Dinding aksen",name:"Bata ekspos merah",spec:[["Ukuran","23 × 7,5 cm"],["Nat","Semen putih 1 cm"],["Finishing","Coating clear doff"],["Kode","DD-01"]]},
+   {p:[0,F+.9,-2.48],cat:"Furnitur",name:"Headboard kain linen",spec:[["Warna","Abu kebiruan"],["Isi","Busa 5 cm"],["Tinggi","115 cm"],["Kode","FR-07"]]},
+   {p:[.5,F+.6,-1],cat:"Tekstil",name:"Seprai katun + bed cover",spec:[["Bahan","Katun 300 TC"],["Warna","Putih tulang, biru kabut"],["Kode","TX-01"]]},
+   {p:[-1.42,.1,.9],cat:"Lemari",name:"HPL putih doff",spec:[["Ukuran","220 × 58 × 240 cm"],["Pintu","Sliding 3 daun"],["Kode","KB-05"]]},
+   {p:[2,.1,-.1],cat:"Bukaan",name:"Jendela aluminium + kaca",spec:[["Kusen","Aluminium hitam"],["Kaca","Tempered 6 mm"],["Kode","JD-02"]]}]}
+];
+
+/* ---------- raytracer kecil untuk menggambar ruangan ---------- */
+function tracer(S){
+  const R=S.room,B=S.boxes,L=[0,R.hi[1]-.35,0];let bi,bax,bt;
+  function boxes(o,d,tmax){bt=tmax;bi=-1;
+    for(let i=0;i<B.length;i++){const b=B[i];let t0=1e-6,t1=bt,ax=-1,ok=true;
+      for(let a=0;a<3;a++){
+        if(Math.abs(d[a])<1e-9){if(o[a]<b.lo[a]||o[a]>b.hi[a]){ok=false;break}continue}
+        let ta=(b.lo[a]-o[a])/d[a],tb=(b.hi[a]-o[a])/d[a];if(ta>tb){const s=ta;ta=tb;tb=s}
+        if(ta>t0){t0=ta;ax=a}if(tb<t1)t1=tb;if(t0>t1){ok=false;break}}
+      if(ok&&ax>=0){bt=t0;bi=i;bax=ax}}}
+  const O=[0,0,0];
+  return function(d){
+    let tR=1e9,aR=0;for(let a=0;a<3;a++){if(Math.abs(d[a])<1e-9)continue;const t=(d[a]>0?R.hi[a]:R.lo[a])/d[a];if(t<tR){tR=t;aR=a}}
+    boxes(O,d,tR);
+    const n=[0,0,0];let t,ax,c;
+    if(bi>=0){t=bt;ax=bax;n[ax]=d[ax]>0?-1:1}else{t=tR;ax=aR;n[ax]=d[ax]>0?-1:1}
+    const p=[d[0]*t,d[1]*t,d[2]*t];
+    const u=ax===0?p[2]:p[0],v=ax===1?p[2]:p[1]-F;
+    if(bi>=0){const b=B[bi];c=((ax===1&&n[1]>0&&b.top)||b.mat)(u,v)}
+    else if(ax===1){
+      if(d[1]>0){const gx=fr(p[0]/1.3+.5)-.5,gz=fr(p[2]/1.3+.5)-.5;c=gx*gx+gz*gz<.0022?[255,246,224,1]:S.ceil(u,v)}
+      else c=S.floor(u,v);
+    }else{
+      const w=ax===0?(d[0]>0?"E":"W"):(d[2]<0?"N":"S"),W=S.win;
+      if(W&&W.wall===w&&u>W.u0&&u<W.u1&&v>W.v0&&v<W.v1)c=M.window()(u,v,W);
+      else if(v<.09)c=WHITE;else c=S.walls[w](u,v);
+    }
+    if(c[3])return c;
+    const q=[p[0]+n[0]*.002,p[1]+n[1]*.002,p[2]+n[2]*.002],l=[L[0]-q[0],L[1]-q[1],L[2]-q[2]];
+    const dist=Math.hypot(l[0],l[1],l[2]),ndl=Math.max(0,(n[0]*l[0]+n[1]*l[1]+n[2]*l[2])/dist);
+    boxes(q,l,1);
+    const k=.6+.62*ndl/(1+.035*dist*dist)*(bi>=0?.2:1);
+    return [c[0]*k,c[1]*k,c[2]*k];
+  };
+}
+function paintPersp(cv,S,yaw,pitch,fov){
+  const W=cv.width,H=cv.height,ctx=cv.getContext("2d"),img=ctx.createImageData(W,H),D=img.data,sh=tracer(S),b=basis(yaw,pitch),ky=Math.tan(fov/2),kx=ky*W/H;
+  for(let y=0,i=0;y<H;y++)for(let x=0;x<W;x++,i+=4){const nx=((x+.5)/W*2-1)*kx,ny=(1-(y+.5)/H*2)*ky;
+    const d=norm([b.f[0]+nx*b.r[0]+ny*b.u[0],b.f[1]+nx*b.r[1]+ny*b.u[1],b.f[2]+nx*b.r[2]+ny*b.u[2]]),c=sh(d);
+    D[i]=c[0];D[i+1]=c[1];D[i+2]=c[2];D[i+3]=255}
+  ctx.putImageData(img,0,0);
+}
+async function paintPano(S,W,H){
+  const cv=document.createElement("canvas");cv.width=W;cv.height=H;
+  const ctx=cv.getContext("2d"),img=ctx.createImageData(W,H),D=img.data,sh=tracer(S);
+  for(let y=0,i=0;y<H;y++){const lat=Math.PI/2-(y+.5)/H*Math.PI,cl=Math.cos(lat),sl=Math.sin(lat);
+    for(let x=0;x<W;x++,i+=4){const lon=(x+.5)/W*2*Math.PI-Math.PI,c=sh([Math.sin(lon)*cl,sl,-Math.cos(lon)*cl]);
+      D[i]=c[0];D[i+1]=c[1];D[i+2]=c[2];D[i+3]=255}
+    if(y%128===127)await new Promise(r=>setTimeout(r))}
+  ctx.putImageData(img,0,0);return cv;
+}
+const norm=v=>{const l=Math.hypot(v[0],v[1],v[2]);return [v[0]/l,v[1]/l,v[2]/l]};
+function basis(yaw,pitch){const sy=Math.sin(yaw),cy=Math.cos(yaw),sp=Math.sin(pitch),cp=Math.cos(pitch);
+  return {f:[sy*cp,sp,-cy*cp],r:[cy,0,sy],u:[-sy*sp,cp,cy*sp]}}
+
+/* ---------- bantuan ---------- */
+const $=id=>document.getElementById(id);
+const el=(t,c,txt)=>{const e=document.createElement(t);if(c)e.className=c;if(txt!=null)e.textContent=txt;return e};
+const demos=SCENES.map(S=>({demo:true,name:S.name,info:S.info,scene:S,pano:null,
+  spots:S.spots.map(s=>({d:norm(s.p),cat:s.cat,name:s.name,spec:s.spec}))}));
+const groupsEl=$("groups"),statusEl=$("status"),MAXB=50*1048576,ITER=310000,SK="mockup360.sesi",GK="mockup360.github";
+function say(t){statusEl.textContent=t||"";statusEl.hidden=!t}
+const mb=b=>(b/1048576).toFixed(1).replace(".",",")+" MB";
+const errMsg=e=>(e&&e.msg)||"gagal menyimpan. Periksa koneksi lalu coba lagi.";
+const fail=e=>{say("Perubahan tidak tersimpan: "+errMsg(e));return false};
+const rid=()=>[...crypto.getRandomValues(new Uint8Array(6))].map(b=>b.toString(16).padStart(2,"0")).join("");
+
+/* ---------- kripto: isi galeri dienkripsi AES-GCM; kuncinya dibungkus kata sandi tiap akun (PBKDF2) ---------- */
+const te=new TextEncoder(),td=new TextDecoder();
+const b64=u8=>{let s="";for(let i=0;i<u8.length;i+=0x8000)s+=String.fromCharCode.apply(null,u8.subarray(i,i+0x8000));return btoa(s)};
+const unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function kek(pw,salt,iter){const k=await crypto.subtle.importKey("raw",te.encode(pw),"PBKDF2",false,["deriveKey"]);
+  return crypto.subtle.deriveKey({name:"PBKDF2",salt,iterations:iter,hash:"SHA-256"},k,{name:"AES-GCM",length:256},false,["encrypt","decrypt"])}
+async function enc(key,buf){const iv=crypto.getRandomValues(new Uint8Array(12)),ct=new Uint8Array(await crypto.subtle.encrypt({name:"AES-GCM",iv},key,buf)),out=new Uint8Array(12+ct.length);out.set(iv);out.set(ct,12);return out}
+const dec=(key,u8)=>crypto.subtle.decrypt({name:"AES-GCM",iv:u8.subarray(0,12)},key,u8.subarray(12));
+const importK=raw=>crypto.subtle.importKey("raw",raw,"AES-GCM",true,["encrypt","decrypt"]);
+
+/* ---------- keadaan ---------- */
+let K=null,me=null,accounts=null,G={groups:[],photos:[]},gh=null,isOwner=false,canEdit=false,loaded=false;
+const shas={},urls=new Map();
+
+/* ---------- penyimpanan: baca dari situs, tulis lewat GitHub API (hanya pemegang token) ---------- */
+function api(path,o){o=o||{};const write=o.method&&o.method!=="GET";
+  return fetch("https://api.github.com/repos/"+gh.owner+"/"+gh.repo+"/contents/"+path+(write?"":"?ref="+encodeURIComponent(gh.branch)),
+    {method:o.method||"GET",body:o.body,cache:"no-store",headers:{Authorization:"Bearer "+gh.token,Accept:o.accept||"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28"}})}
+function ghErr(r){const m={401:"token GitHub tidak valid atau sudah kedaluwarsa.",403:"token tidak punya izin tulis ke repo ini (perlu Contents: Read and write).",404:"repo, branch, atau file tidak ditemukan.",413:"file terlalu besar untuk GitHub.",422:"GitHub menolak file ini (terlalu besar atau bentrok)."};
+  return {msg:m[r.status]||"GitHub menolak permintaan (kode "+r.status+")."}}
+async function readFile(path){
+  const r=canEdit?await api(path,{accept:"application/vnd.github.raw+json"}):await fetch(path,{cache:"no-cache"});
+  if(r.status===404)return null;if(!r.ok)throw canEdit?ghErr(r):{msg:"file tidak bisa dimuat."};return new Uint8Array(await r.arrayBuffer())}
+async function getSha(path){const r=await api(path,{accept:"application/vnd.github.object+json"});if(r.status===404)return null;if(!r.ok)throw ghErr(r);return (await r.json()).sha}
+async function writeFile(path,u8,msg){for(let t=0;;t++){
+  if(shas[path]===undefined)shas[path]=await getSha(path);
+  const body={message:msg,content:b64(u8),branch:gh.branch};if(shas[path])body.sha=shas[path];
+  const r=await api(path,{method:"PUT",body:JSON.stringify(body)});
+  if((r.status===409||r.status===422)&&!t){delete shas[path];continue}
+  if(!r.ok)throw ghErr(r);return shas[path]=(await r.json()).content.sha}}
+async function deleteFile(path,sha){sha=sha||await getSha(path);if(!sha)return;
+  const r=await api(path,{method:"DELETE",body:JSON.stringify({message:"Hapus "+path,sha,branch:gh.branch})});if(!r.ok&&r.status!==404)throw ghErr(r);delete shas[path]}
+let chain=Promise.resolve();
+const queue=fn=>(chain=chain.catch(()=>{}).then(fn));
+const pack=()=>JSON.stringify({groups:G.groups.map(g=>({id:g.id,name:g.name})),photos:G.photos.map(p=>({id:p.id,name:p.name,group:p.group,type:p.type,w:p.w,h:p.h,bytes:p.bytes,sha:p.sha,tsha:p.tsha,
+  spots:p.spots.map(s=>({d:s.d,name:s.name,cat:s.cat||"",note:s.note||""}))}))});
+function commit(msg){render();return queue(async()=>{say("Menyimpan ke GitHub…");await writeFile("data/gallery.enc",await enc(K,te.encode(pack())),msg);
+  say("Tersimpan. Pengguna lain melihat perubahan ini sekitar satu menit lagi.");return true}).catch(fail)}
+function saveSpots(P){commit("Ubah titik material "+P.name)}
+function blobUrl(P,thumb){const key=P.id+(thumb?".t":"");
+  if(!urls.has(key))urls.set(key,(async()=>{const raw=await readFile("data/p/"+key+".bin");if(!raw)throw {msg:"file foto belum tersedia."};
+    return URL.createObjectURL(new Blob([await dec(K,raw)],{type:thumb?"image/jpeg":P.type||"image/jpeg"}))})().catch(e=>{urls.delete(key);throw e}));
+  return urls.get(key)}
+
+/* ---------- galeri ---------- */
+function infoOf(P){const n=P.spots.length+" titik material";return P.demo?P.info+" · "+n:P.w+" × "+P.h+" px · "+mb(P.bytes||0)+" · "+n}
+function armDelete(btn,label,fn){let armed=false,t;btn.addEventListener("click",()=>{
+  if(!armed){armed=true;btn.textContent="Yakin hapus?";btn.classList.add("danger");t=setTimeout(()=>{armed=false;btn.textContent=label;btn.classList.remove("danger")},4000)}
+  else{clearTimeout(t);fn()}})}
+function askName(box,val,save){const f=el("form","inline"),i=el("input");i.value=val;i.maxLength=60;i.required=true;i.setAttribute("aria-label","Nama baru");
+  const ok=el("button","btn small primary","Simpan");ok.type="submit";const no=el("button","btn small","Batal");no.type="button";
+  f.append(i,ok,no);const old=[...box.childNodes];box.replaceChildren(f);i.focus();i.select();
+  no.addEventListener("click",()=>box.replaceChildren(...old));
+  f.addEventListener("submit",e=>{e.preventDefault();const v=i.value.trim();box.replaceChildren(...old);if(v&&v!==val)save(v)})}
+function card(P){
+  const li=el("li","cell"),b=el("button","card");b.type="button";const th=el("span","thumb");
+  if(P.demo){if(!P.cv){P.cv=document.createElement("canvas");P.cv.width=640;P.cv.height=400;setTimeout(()=>paintPersp(P.cv,P.scene,0,-.12,1.35),30)}th.append(P.cv)}
+  else{const im=new Image();im.alt="";th.append(im);blobUrl(P,true).then(u=>{im.src=u},()=>{})}
+  th.append(el("span","badge","360°"));const m=el("span","meta");m.append(el("strong",null,P.name),el("span",null,infoOf(P)));
+  b.append(th,m);b.setAttribute("aria-label","Buka tampilan 360 "+P.name);b.addEventListener("click",()=>openViewer(P));li.append(b);
+  if(canEdit&&!P.demo){const a=el("div","acts"),rn=el("button","link","Ubah nama"),dl=el("button","link","Hapus");rn.type=dl.type="button";
+    rn.addEventListener("click",()=>askName(a,P.name,v=>{P.name=v;commit("Ubah nama foto "+v)}));
+    a.append(rn);
+    if(G.groups.length>1){const s=el("select");s.setAttribute("aria-label","Pindahkan ke grup lain");
+      G.groups.forEach(g=>{const o=el("option",null,(g.id===P.group?"Grup: ":"Pindah ke: ")+g.name);o.value=g.id;o.selected=g.id===P.group;s.append(o)});
+      s.addEventListener("change",()=>{P.group=s.value;commit("Pindahkan foto "+P.name)});a.append(s)}
+    armDelete(dl,"Hapus",async()=>{G.photos.splice(G.photos.indexOf(P),1);
+      if(await commit("Hapus foto "+P.name)){queue(()=>deleteFile("data/p/"+P.id+".bin",P.sha)).catch(()=>{});queue(()=>deleteFile("data/p/"+P.id+".t.bin",P.tsha)).catch(()=>{})}});
+    a.append(dl);li.append(a)}
+  return li;
+}
+function section(title,count,list,g){
+  const sec=el("section","group"),h=el("div","ghead");h.append(el("h2",null,title),el("span","count",count));
+  if(g&&canEdit){
+    const id="up-"+g.id,lb=el("label","btn small primary","Unggah foto"),inp=el("input");lb.htmlFor=id;inp.id=id;inp.type="file";inp.accept="image/jpeg,image/png,image/webp";inp.multiple=true;inp.hidden=true;
+    inp.addEventListener("change",()=>{const fs=[...inp.files];inp.value="";if(fs.length)upload(g,fs)});h.append(lb,inp);
+    const rn=el("button","link","Ubah nama"),dl=el("button","link","Hapus grup");rn.type=dl.type="button";
+    rn.addEventListener("click",()=>askName(h,g.name,v=>{g.name=v;commit("Ubah nama grup "+v)}));
+    armDelete(dl,"Hapus grup",()=>{if(list.length)say("Grup “"+g.name+"” masih berisi foto. Pindahkan atau hapus fotonya dulu.");else{G.groups.splice(G.groups.indexOf(g),1);commit("Hapus grup "+g.name)}});
+    h.append(rn,dl)}
+  sec.append(h);
+  if(list.length){const ul=el("ul","grid");list.forEach(P=>ul.append(card(P)));sec.append(ul)}
+  else sec.append(el("p","gempty",canEdit?"Grup ini masih kosong. Tekan “Unggah foto” untuk menambahkan render 360.":"Belum ada foto di grup ini."));
+  return sec;
+}
+function render(){
+  groupsEl.textContent="";if(!loaded){groupsEl.append(el("p","status","Memuat galeri…"));return}
+  const all=G.photos,ids=new Set(G.groups.map(g=>g.id));
+  G.groups.forEach(g=>{const ps=all.filter(p=>p.group===g.id);groupsEl.append(section(g.name,ps.length+" foto",ps,g))});
+  const loose=all.filter(p=>!ids.has(p.group));if(loose.length)groupsEl.append(section("Tanpa grup",loose.length+" foto",loose,null));
+  if(!G.groups.length&&!loose.length)groupsEl.append(el("p","status",canEdit?"Belum ada grup. Tekan “+ Buat grup”, lalu unggah render 360 ke dalamnya.":isOwner?"Buka Pengaturan dan sambungkan GitHub untuk mulai membuat grup dan mengunggah foto.":"Pemilik galeri belum menambahkan foto."));
+  if(!all.length)groupsEl.append(section("Contoh tampilan","3 ruangan contoh",demos,null));
+  const note=$("note"),t=[];
+  if(!all.length)t.push("Tiga ruangan contoh digambar oleh halaman ini dan hilang setelah foto pertama diunggah.");
+  if(isOwner)t.push("Foto disimpan terenkripsi dan ditampilkan pada ukuran aslinya, maksimal 50 MB per file (JPG, PNG, atau WebP). Gunakan render panorama equirectangular rasio 2:1 dari V-Ray, Enscape, Lumion, D5, atau Twinmotion.");
+  note.textContent=t.join(" ");note.hidden=!t.length;
+}
+const loadImg=u=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>rej({msg:"file bukan gambar yang bisa dibaca browser."});i.src=u});
+async function upload(g,files){
+  const bad=[];let ok=0;
+  for(let n=0;n<files.length;n++){const f=files[n];say("Mengunggah "+(n+1)+" dari "+files.length+": "+f.name+" ("+mb(f.size)+") …");
+    try{
+      if(f.size>MAXB)throw {msg:"ukuran file melebihi 50 MB."};
+      const buf=await f.arrayBuffer(),url=URL.createObjectURL(f),im=await loadImg(url),w=im.naturalWidth,h=im.naturalHeight;
+      /* gambar kecil hanya untuk kartu galeri; file asli disimpan tanpa diubah */
+      const cv=document.createElement("canvas");cv.width=640;cv.height=400;cv.getContext("2d").drawImage(im,w*.36,h*.28,w*.28,h*.35,0,0,640,400);
+      const tb=await new Promise(r=>cv.toBlob(r,"image/jpeg",.85));
+      const id=rid(),P={id,name:f.name.replace(/\.[^.]+$/,"").slice(0,60),group:g.id,type:f.type||"image/jpeg",w,h,bytes:f.size,spots:[]};
+      const eb=await enc(K,buf),et=await enc(K,await tb.arrayBuffer());
+      P.sha=await queue(()=>writeFile("data/p/"+id+".bin",eb,"Tambah foto "+P.name));
+      P.tsha=await queue(()=>writeFile("data/p/"+id+".t.bin",et,"Tambah gambar kecil "+P.name));
+      urls.set(id,Promise.resolve(url));urls.set(id+".t",Promise.resolve(URL.createObjectURL(tb)));
+      G.photos.push(P);if(!await commit("Tambah foto "+P.name))throw {msg:"daftar galeri gagal disimpan."};ok++;
+    }catch(e){bad.push(f.name+": "+errMsg(e))}}
+  say((ok?ok+" foto tersimpan pada ukuran aslinya di grup “"+g.name+"”. Pengguna lain melihatnya sekitar satu menit lagi. ":"")+(bad.length?"Tidak terunggah — "+bad.join(" · "):""));
+}
+$("newGroup").addEventListener("click",()=>{$("groupForm").hidden=false;$("gName").focus()});
+$("gCancel").addEventListener("click",()=>{$("groupForm").hidden=true});
+$("groupForm").addEventListener("submit",e=>{e.preventDefault();const v=$("gName").value.trim();if(!v||!canEdit)return;
+  e.target.reset();$("groupForm").hidden=true;G.groups.push({id:rid(),name:v});commit("Buat grup "+v)});
+
+/* ---------- masuk, keluar, pengaturan ---------- */
+function lErr(t){$("lErr").textContent=t||"";$("lErr").hidden=!t}
+function setEdit(){canEdit=isOwner&&!!gh;$("newGroup").hidden=!canEdit;
+  $("who").textContent="Masuk sebagai "+me.user+(canEdit?" · pemilik, boleh unggah dan edit":isOwner?" · pemilik, GitHub belum tersambung":" · lihat saja");
+  $("ghState").textContent=gh?"Tersambung ke "+gh.owner+"/"+gh.repo+" ("+gh.branch+").":"Belum tersambung.";$("accForm").hidden=!canEdit}
+async function loadGallery(){loaded=false;render();
+  try{const raw=await readFile("data/gallery.enc");G=raw?JSON.parse(td.decode(await dec(K,raw))):{groups:[],photos:[]};
+    G.groups=(G.groups||[]).map(g=>({id:String(g.id),name:String(g.name||"Grup")}));
+    G.photos=(G.photos||[]).map(p=>Object.assign({},p,{name:String(p.name||"Tanpa nama"),spots:(p.spots||[]).filter(s=>s&&Array.isArray(s.d)&&s.d.length===3)}));
+  }catch(e){if(e instanceof DOMException){logout();return}say("Galeri tidak bisa dimuat: "+errMsg(e))}
+  loaded=true;render()}
+async function enter(){
+  isOwner=me.role==="owner";$("login").hidden=true;$("gallery").hidden=false;$("setBtn").hidden=!isOwner;
+  if(isOwner){try{gh=JSON.parse(localStorage.getItem(GK))}catch(e){gh=null}
+    const host=location.hostname.match(/^(.+)\.github\.io$/),seg=location.pathname.split("/").filter(Boolean)[0];
+    $("ghOwner").value=gh?gh.owner:host?host[1]:"";$("ghRepo").value=gh?gh.repo:host?(seg&&!/\.html?$/.test(seg)?seg:location.hostname):"";if(gh){$("ghBranch").value=gh.branch;$("ghToken").value=gh.token}
+    $("accUser").replaceChildren(...accounts.users.map(a=>{const o=el("option",null,a.user+(a.role==="owner"?" (pemilik)":""));o.value=a.user;return o}));
+    if(!gh){$("settings").hidden=false;$("setBtn").setAttribute("aria-pressed","true")}}
+  setEdit();await loadGallery()}
+function logout(){try{sessionStorage.removeItem(SK)}catch(e){}location.reload()}
+$("logout").addEventListener("click",logout);
+$("setBtn").addEventListener("click",()=>{const s=$("settings");s.hidden=!s.hidden;$("setBtn").setAttribute("aria-pressed",String(!s.hidden))});
+$("loginForm").addEventListener("submit",async e=>{e.preventDefault();lErr("");$("lBtn").disabled=true;
+  const u=$("lUser").value.trim().toLowerCase(),a=accounts&&accounts.users.find(x=>x.user.toLowerCase()===u);
+  try{if(!a)throw 0;const raw=new Uint8Array(await dec(await kek($("lPass").value,unb64(a.salt),a.iter),unb64(a.wrap)));
+    K=await importK(raw);me={user:a.user,role:a.role};try{sessionStorage.setItem(SK,JSON.stringify({user:a.user,role:a.role,k:b64(raw)}))}catch(x){}
+    $("lPass").value="";await enter()}
+  catch(x){lErr(accounts?"Nama pengguna atau kata sandi salah.":"Data akun tidak ditemukan.")}
+  $("lBtn").disabled=false});
+$("ghForm").addEventListener("submit",async e=>{e.preventDefault();
+  gh={owner:$("ghOwner").value.trim(),repo:$("ghRepo").value.trim(),branch:$("ghBranch").value.trim()||"main",token:$("ghToken").value.trim()};
+  $("ghState").textContent="Memeriksa sambungan…";
+  try{const r=await api("data/accounts.json",{accept:"application/vnd.github.object+json"});if(!r.ok)throw ghErr(r)}
+  catch(x){gh=null;setEdit();$("ghState").textContent="Gagal tersambung: "+(x.msg||"periksa koneksi internet.");return}
+  try{localStorage.setItem(GK,JSON.stringify(gh))}catch(x){}
+  setEdit();urls.clear();await loadGallery()});
+$("ghOff").addEventListener("click",()=>{try{localStorage.removeItem(GK)}catch(e){}gh=null;$("ghToken").value="";setEdit();render()});
+$("accForm").addEventListener("submit",async e=>{e.preventDefault();const a=accounts.users.find(x=>x.user===$("accUser").value),pw=$("accPass").value;if(!a||pw.length<8||!canEdit)return;
+  $("accState").textContent="Menyimpan…";
+  try{const raw=new Uint8Array(await crypto.subtle.exportKey("raw",K)),salt=crypto.getRandomValues(new Uint8Array(16)),w=await enc(await kek(pw,salt,ITER),raw);
+    const next={v:accounts.v,users:accounts.users.map(x=>x===a?{user:a.user,role:a.role,salt:b64(salt),iter:ITER,wrap:b64(w)}:x)};
+    await queue(()=>writeFile("data/accounts.json",te.encode(JSON.stringify(next,null,1)),"Ganti kata sandi "+a.user));accounts=next;
+    $("accPass").value="";$("accState").textContent="Kata sandi "+a.user+" diganti. Berlaku di situs sekitar satu menit lagi."}
+  catch(x){$("accState").textContent="Gagal: "+errMsg(x)}});
+async function boot(){
+  if(!window.crypto||!crypto.subtle){lErr("Halaman ini harus dibuka lewat https (atau localhost).");return}
+  try{const r=await fetch("data/accounts.json",{cache:"no-cache"});if(!r.ok)throw 0;accounts=await r.json()}catch(e){lErr("Data akun tidak ditemukan (data/accounts.json).");return}
+  try{const s=JSON.parse(sessionStorage.getItem(SK));if(s&&accounts.users.some(a=>a.user===s.user&&a.role===s.role)){K=await importK(unb64(s.k));me={user:s.user,role:s.role};await enter()}}catch(e){}
+}
+
+/* ---------- viewer WebGL ---------- */
+const stage=$("stage"),glc=$("gl"),gl2=glc.getContext("webgl2",{antialias:false}),gl=gl2||glc.getContext("webgl",{antialias:false});
+let maxTex=4096,prog,tex,loc={};
+if(gl){
+  maxTex=gl.getParameter(gl.MAX_TEXTURE_SIZE);
+  const sh=(t,s)=>{const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);return o};
+  prog=gl.createProgram();
+  gl.attachShader(prog,sh(gl.VERTEX_SHADER,"attribute vec2 a;varying vec2 v;void main(){v=a;gl_Position=vec4(a,0.,1.);}"));
+  gl.attachShader(prog,sh(gl.FRAGMENT_SHADER,"precision highp float;uniform sampler2D t;uniform vec3 f,r,u;uniform vec2 k;varying vec2 v;void main(){vec3 d=normalize(f+v.x*k.x*r+v.y*k.y*u);float lon=atan(d.x,-d.z),lat=asin(clamp(d.y,-1.,1.));gl_FragColor=texture2D(t,vec2(lon/6.2831853+.5,.5-lat/3.14159265));}"));
+  gl.linkProgram(prog);gl.useProgram(prog);
+  gl.bindBuffer(gl.ARRAY_BUFFER,gl.createBuffer());gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0);gl.bindAttribLocation(prog,0,"a");gl.vertexAttribPointer(gl.getAttribLocation(prog,"a"),2,gl.FLOAT,false,0,0);
+  ["f","r","u","k"].forEach(n=>loc[n]=gl.getUniformLocation(prog,n));
+  tex=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,tex);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl2?gl.REPEAT:gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+}
+const still=matchMedia("(prefers-reduced-motion: reduce)").matches;
+let cur=null,yaw=0,pitch=0,fov=1.35,auto=false,ready=false,adding=false,pending=null,raf=0,target=null,W=1,H=1;
+const spotsEl=$("spots"),listEl=$("list");
+
+function resize(){const r=stage.getBoundingClientRect(),dpr=Math.min(2,devicePixelRatio||1);W=r.width||1;H=r.height||1;
+  glc.width=Math.round(W*dpr);glc.height=Math.round(H*dpr);if(gl)gl.viewport(0,0,glc.width,glc.height);draw()}
+function draw(){if(!raf)raf=requestAnimationFrame(frame)}
+function frame(){raf=0;if(!cur)return;
+  if(target){const dy=Math.atan2(Math.sin(target[0]-yaw),Math.cos(target[0]-yaw)),dp=target[1]-pitch;
+    if(still||Math.abs(dy)+Math.abs(dp)<.004){yaw=target[0];pitch=target[1];target=null}else{yaw+=dy*.14;pitch+=dp*.14}draw()}
+  else if(auto){yaw+=.0016;draw()}
+  const b=basis(yaw,pitch),ky=Math.tan(fov/2),kx=ky*W/H;
+  if(gl&&ready){gl.uniform3fv(loc.f,b.f);gl.uniform3fv(loc.r,b.r);gl.uniform3fv(loc.u,b.u);gl.uniform2f(loc.k,kx,ky);gl.drawArrays(gl.TRIANGLES,0,3)}
+  cur.spots.forEach(s=>{const d=s.d,z=d[0]*b.f[0]+d[1]*b.f[1]+d[2]*b.f[2],el=s.el;if(!el)return;
+    if(z<.05||!ready){el.hidden=true;return}
+    const x=((d[0]*b.r[0]+d[2]*b.r[2])/(z*kx)+1)/2*W,y=(1-(d[0]*b.u[0]+d[1]*b.u[1]+d[2]*b.u[2])/(z*ky))/2*H;
+    if(x<-20||x>W+20||y<-20||y>H+20){el.hidden=true;return}
+    el.hidden=false;el.style.transform="translate("+x.toFixed(1)+"px,"+y.toFixed(1)+"px)";
+    el.classList.toggle("below",y<230);el.classList.toggle("toL",x<140);el.classList.toggle("toR",x>W-140)});
+}
+function dirAt(cx,cy){const r=stage.getBoundingClientRect(),b=basis(yaw,pitch),ky=Math.tan(fov/2),kx=ky*W/H,
+  nx=((cx-r.left)/W*2-1)*kx,ny=(1-(cy-r.top)/H*2)*ky;
+  return norm([b.f[0]+nx*b.r[0]+ny*b.u[0],b.f[1]+nx*b.r[1]+ny*b.u[1],b.f[2]+nx*b.r[2]+ny*b.u[2]])}
+
+function buildSpots(){
+  spotsEl.textContent="";listEl.textContent="";$("empty").hidden=cur.spots.length>0;
+  $("empty").textContent=canEdit&&!cur.demo?"Belum ada titik. Tekan “+ Tambah titik”, lalu klik permukaan yang ingin diberi keterangan.":"Belum ada titik material di foto ini.";
+  cur.spots.forEach((s,i)=>{
+    const el=document.createElement("button");el.type="button";el.className="hs";el.hidden=true;el.setAttribute("aria-label",s.name);
+    const dot=document.createElement("span");dot.className="dot";dot.textContent=i+1;
+    const tip=document.createElement("span");tip.className="tip";tip.setAttribute("role","tooltip");
+    const sm=document.createElement("small");sm.textContent=s.cat||"Material";const nm=document.createElement("b");nm.textContent=s.name;tip.append(sm,nm);
+    if(s.spec){const dl=document.createElement("dl");s.spec.forEach(([k,v])=>{const dt=document.createElement("dt"),dd=document.createElement("dd");dt.textContent=k;dd.textContent=v;dl.append(dt,dd)});tip.append(dl)}
+    else if(s.note){const p=document.createElement("p");p.textContent=s.note;tip.append(p)}
+    el.append(dot,tip);spotsEl.append(el);s.el=el;
+    const li=document.createElement("li"),it=document.createElement("button");it.type="button";it.className="item";
+    const n=document.createElement("i");n.textContent=i+1;const tx=document.createElement("span"),em=document.createElement("em");
+    em.textContent=s.cat||"Material";tx.append(document.createTextNode(s.name),em);it.append(n,tx);li.append(it);
+    const on=v=>{el.classList.toggle("on",v);it.classList.toggle("on",v)};
+    el.addEventListener("pointerdown",e=>e.stopPropagation());
+    el.addEventListener("click",e=>{e.stopPropagation();const v=!el.classList.contains("on");clearOn();on(v);auto=false});
+    el.addEventListener("mouseenter",()=>{it.classList.add("on");auto=false});
+    el.addEventListener("mouseleave",()=>{if(!el.classList.contains("on"))it.classList.remove("on")});
+    it.addEventListener("click",()=>{clearOn();on(true);auto=false;target=[Math.atan2(s.d[0],-s.d[2]),Math.max(-1.2,Math.min(1.2,Math.asin(s.d[1])+.12))];draw()});
+    if(canEdit&&!cur.demo){const x=document.createElement("button");x.type="button";x.className="del";x.textContent="Hapus";
+      x.addEventListener("click",()=>{cur.spots.splice(cur.spots.indexOf(s),1);saveSpots(cur);buildSpots()});li.append(x)}
+    listEl.append(li)});
+  draw();
+}
+function clearOn(){document.querySelectorAll(".hs.on,.item.on").forEach(e=>e.classList.remove("on"))}
+function setHint(){$("hint").textContent=adding?"Klik permukaan yang ingin diberi titik material":"Geser untuk melihat sekeliling · gulir untuk zoom · arahkan kursor ke titik bernomor"}
+function setAdding(v){adding=v;pending=null;stage.classList.toggle("adding",v);$("addBtn").setAttribute("aria-pressed",v);$("addForm").hidden=true;if(v)auto=false;setHint()}
+
+async function openViewer(P){
+  cur=P;$("gallery").hidden=true;$("viewer").hidden=false;$("vTitle").textContent=P.name;$("addBtn").hidden=!(canEdit&&!P.demo);
+  yaw=0;pitch=-.08;fov=1.35;target=null;ready=false;setAdding(false);$("loading").hidden=false;
+  $("loading").textContent=gl?"MENYIAPKAN PANORAMA…":"Browser ini tidak mendukung WebGL.";
+  buildSpots();resize();
+  try{
+    if(!P.pano){
+      if(P.demo)P.pano=await paintPano(P.scene,2048,1024);
+      else{const im=await loadImg(await blobUrl(P,false)),w=im.naturalWidth,h=im.naturalHeight,big=Math.max(w,h);P.pano=im;
+        /* tampil pada resolusi asli; diperkecil hanya bila melebihi batas tekstur kartu grafis perangkat ini */
+        if(big>maxTex){const k=maxTex/big,cv=document.createElement("canvas");cv.width=Math.floor(w*k);cv.height=Math.floor(h*k);cv.getContext("2d").drawImage(im,0,0,cv.width,cv.height);P.pano=cv}}}
+  }catch(e){if(cur===P)$("loading").textContent="Foto tidak bisa dimuat.";return}
+  if(cur!==P)return;
+  if(gl){gl.bindTexture(gl.TEXTURE_2D,tex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,P.pano);$("loading").hidden=true;ready=true}
+  auto=!still&&P.spots.length>0;draw();
+}
+function closeViewer(){if(document.fullscreenElement)document.exitFullscreen();cur=null;$("viewer").hidden=true;$("gallery").hidden=false}
+$("back").addEventListener("click",closeViewer);
+$("addBtn").addEventListener("click",()=>setAdding(!adding));
+$("fsBtn").addEventListener("click",()=>{const v=$("viewer");if(document.fullscreenElement)document.exitFullscreen();else if(v.requestFullscreen)v.requestFullscreen().catch(()=>{})});
+$("fCancel").addEventListener("click",()=>setAdding(false));
+$("addForm").addEventListener("submit",e=>{e.preventDefault();if(!pending)return;
+  cur.spots.push({d:pending.map(v=>+v.toFixed(5)),name:$("fName").value.trim(),cat:$("fCat").value.trim(),note:$("fNote").value.trim()});
+  e.target.reset();saveSpots(cur);setAdding(false);buildSpots()});
+
+/* geser, zoom, keyboard */
+const pts=new Map();let moved=0,pinch=0;
+stage.addEventListener("pointerdown",e=>{if(e.target.closest(".zoom"))return;stage.setPointerCapture(e.pointerId);pts.set(e.pointerId,[e.clientX,e.clientY]);moved=0;auto=false;target=null;stage.classList.add("drag");
+  if(pts.size===2){const a=[...pts.values()];pinch=Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1])}});
+stage.addEventListener("pointermove",e=>{const p=pts.get(e.pointerId);if(!p)return;const dx=e.clientX-p[0],dy=e.clientY-p[1];pts.set(e.pointerId,[e.clientX,e.clientY]);
+  if(pts.size===2){const a=[...pts.values()],d=Math.hypot(a[0][0]-a[1][0],a[0][1]-a[1][1]);if(pinch)zoom(pinch/d);pinch=d;moved=99;return}
+  moved+=Math.abs(dx)+Math.abs(dy);const k=fov/H;yaw-=dx*k;pitch=Math.max(-1.45,Math.min(1.45,pitch+dy*k));draw()});
+const up=e=>{if(!pts.has(e.pointerId))return;pts.delete(e.pointerId);pinch=0;stage.classList.remove("drag");
+  if(moved<6&&e.type==="pointerup"){if(adding){pending=dirAt(e.clientX,e.clientY);$("addForm").hidden=false;$("fName").focus()}else clearOn()}};
+stage.addEventListener("pointerup",up);stage.addEventListener("pointercancel",up);
+function zoom(f){fov=Math.max(.5,Math.min(1.75,fov*f));draw()}
+stage.addEventListener("wheel",e=>{e.preventDefault();auto=false;zoom(e.deltaY>0?1.08:.93)},{passive:false});
+$("zin").addEventListener("click",()=>zoom(.85));$("zout").addEventListener("click",()=>zoom(1.18));
+addEventListener("keydown",e=>{if(!cur||/INPUT|TEXTAREA/.test(e.target.tagName))return;const s=.08;
+  if(e.key==="ArrowLeft")yaw-=s;else if(e.key==="ArrowRight")yaw+=s;else if(e.key==="ArrowUp")pitch=Math.min(1.45,pitch+s);else if(e.key==="ArrowDown")pitch=Math.max(-1.45,pitch-s);
+  else if(e.key==="Escape"){clearOn();if(adding)setAdding(false);return}else return;
+  e.preventDefault();auto=false;draw()});
+addEventListener("resize",()=>{if(cur)resize()});
+if(window.ResizeObserver)new ResizeObserver(()=>{if(cur)resize()}).observe(stage);
+boot();
+})();
+</script>
+</body>
+</html>

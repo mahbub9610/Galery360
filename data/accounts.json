@@ -1,0 +1,33 @@
+{
+ "v": 1,
+ "users": [
+  {
+   "user": "pemilik",
+   "role": "owner",
+   "salt": "Z6gZ5xWEifdMkabvv04L0Q==",
+   "iter": 310000,
+   "wrap": "xbPLGuQMdK4SDunF4Dg9NryQlD3qh1ba5fK50jqOXpVhayYrV9jStiyT/FTZSzYQbg25jHbfnctDp2A8"
+  },
+  {
+   "user": "ADHIWKM",
+   "role": "viewer",
+   "salt": "76HqUis9LumLlOdypUcLQA==",
+   "iter": 310000,
+   "wrap": "eIvWI3VVKTip/nvC3UyF3SM1uD/gf4NgfBOTpg/UncslKwHRXl4C/UH/Y4jZVdJlnRInOZlgHMhR7CZS"
+  },
+  {
+   "user": "MKCCM",
+   "role": "viewer",
+   "salt": "S5Wtz/hjuDUJ+NNmGXiovA==",
+   "iter": 310000,
+   "wrap": "CGH2qofWm1Q8915N3r7qvJ9nCw7Q/1JE/R/aB/CeaV13G9XcaC5WeWrGwlIUg9l/n7Thpnm64eGMmtz3"
+  },
+  {
+   "user": "ANGKASAPURA",
+   "role": "viewer",
+   "salt": "rK61RYgjhF2vh4IAFJkcmw==",
+   "iter": 310000,
+   "wrap": "NMGCoZt0Qg89f05f+ZDWM2xSIEsI7btlffVpg3IF/Twrp/IwnMYnaXwOI9mHtE7qiFEcYmm0qASdZ9Mb"
+  }
+ ]
+}
